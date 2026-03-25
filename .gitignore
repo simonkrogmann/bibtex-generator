@@ -210,3 +210,8 @@ references.txt
 *.bib
 CACHE.pickle
 bibtex-generator-cache.pickle
+
+bin
+include
+lib
+pyvenv.cfg

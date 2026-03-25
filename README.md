@@ -16,7 +16,7 @@ ollama pull mistral
 pip install ollama
 ```
 
-Alternatively you can use another model. The default model mistral runs locally on your computer.
+Alternatively you can use another model. The default model mistral runs locally on your computer. It is relatively quick and reasonably accurate.
 
 ## Usage
 
@@ -34,4 +34,4 @@ python3 bibtex-generator.py -i references.txt -o references.bib -llm
 
 Specify a model with `-m <model_name>`.
 
-A file called `CACHE.pickle` is generated that caches web requests.
+A file called `bibtex-generator-cache.pickle` is generated that caches web requests.

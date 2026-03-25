@@ -46,12 +46,13 @@ def parse_references(references):
     return parsed
 
 
-def sort_and_deduplicate(parsed):
+def sort_and_deduplicate(parsed, verbose=False):
     parsed.sort(key=lambda x: (x.doi is False, x.doi))
     filtered = []
     for i, ref in enumerate(parsed):
         if i > 0 and ref.doi and ref.doi == parsed[i - 1].doi:
-            print('Warning: duplicate removed: ', ref.text)
+            if verbose:
+                print('Warning: duplicate removed: ', ref.text)
             continue
         filtered.append(ref)
     return filtered
@@ -103,7 +104,7 @@ def resolve_doi(doi, cache):
         sys.exit(0)
 
 
-def create_ref_llm(text, model):
+def create_ref_llm(text, model, verbose=False):
     stream = chat(
         model=model,
         messages=[{'role': 'system', 'content': 'You are very knowledgeable. An expert. Think and respond with confidence.'},
@@ -116,6 +117,9 @@ def create_ref_llm(text, model):
 
     try:
         for chunk in stream:
+            response += chunk.message.content
+            if not verbose:
+                continue
             if chunk.message.thinking and not thinking:
                 thinking = True
                 print('Thinking:\n', end='')
@@ -126,7 +130,6 @@ def create_ref_llm(text, model):
                     print('\n\nAnswer:\n', end='')
                     thinking = False
                 print(chunk.message.content, end='', flush=True)
-                response += chunk.message.content
     except ResponseError as e:
         print(f'The model "{model}" is not available: {e}')
         sys.exit(2)
@@ -149,6 +152,7 @@ def main():
     parser.add_argument('-i', '--input', help='input file', required=True)
     parser.add_argument('-o', '--output', help='output file', required=True)
     parser.add_argument('-llm', '--llm', action='store_true', help='use llm to generate references?', required=False)
+    parser.add_argument('-v', '--verbose', action='store_true', help='print warnings and llm output', required=False)
     parser.add_argument('-m', '--model', help='model to use to generate references without DOI, default: mistral', default='mistral', required=False)
     args = parser.parse_args()
 
@@ -158,7 +162,7 @@ def main():
     with open(args.input, 'r') as f:
         text = f.read()
     parsed = parse_references(text.splitlines())
-    filtered = sort_and_deduplicate(parsed)
+    filtered = sort_and_deduplicate(parsed, args.verbose)
     cache = prepare_cache()
     for i, ref in enumerate(filtered):
         print(f'Reference {i} of {len(filtered)}')
@@ -167,7 +171,7 @@ def main():
             if not ref.bibtex:
                 print(f'Error: Broken DOI {ref.doi} in ', ref.text)
         elif LLM_AVAILABLE and args.llm:
-            ref.bibtex = create_ref_llm(ref.text, args.model)
+            ref.bibtex = create_ref_llm(ref.text, args.model, args.verbose)
             if not ref.bibtex:
                 print("Error: The LLM failed to generate a reference for ", ref.text)
         else:
