@@ -1,5 +1,5 @@
 # bibtex-generator
-Takes citations and generates a bibtex file using DOI lookups and optionally an LLM.
+Takes citations (formatted in e.g. APA) and generates a bibtex file using DOI lookups and optionally an LLM.
 
 ## Preparation
 
