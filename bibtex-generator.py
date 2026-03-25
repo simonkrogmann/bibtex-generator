@@ -15,18 +15,19 @@ try:
     LLM_AVAILABLE = True
 except ImportError:
     LLM_AVAILABLE = False
+from collections.abc import Sequence
 
 CACHE_FILE = 'bibtex-generator-cache.pickle'
 
 
 class Reference:
-    def __init__(self, text, doi=False, bibtex=False):
+    def __init__(self, text: str, doi: str | bool = False, bibtex: str | bool = False) -> None:
         self.text = text
         self.doi = doi
         self.bibtex = bibtex
 
 
-def parse_references(references):
+def parse_references(references: Sequence[str]) -> Sequence[Reference]:
     parsed = []
     for line in references:
         if not line:
@@ -46,7 +47,7 @@ def parse_references(references):
     return parsed
 
 
-def sort_and_deduplicate(parsed, verbose=False):
+def sort_and_deduplicate(parsed: Sequence[Reference], verbose: bool = False) -> Sequence[Reference]:
     parsed.sort(key=lambda x: (x.doi is False, x.doi))
     filtered = []
     for i, ref in enumerate(parsed):
@@ -58,7 +59,7 @@ def sort_and_deduplicate(parsed, verbose=False):
     return filtered
 
 
-def prepare_cache():
+def prepare_cache() -> dict[str, str]:
     try:
         with open(CACHE_FILE, 'rb') as f:
             cache = pickle.load(f)
@@ -72,7 +73,7 @@ def save_cache(cache):
         pickle.dump(cache, f)
 
 
-def prettify_bibtex(string):
+def prettify_bibtex(string:  dict[str, str]):
     if not PRETTIFY:
         return string
     # The round-trip through bibtexparser adds line endings.
@@ -84,7 +85,7 @@ def prettify_bibtex(string):
 BASE_URL = 'http://dx.doi.org/'
 
 
-def resolve_doi(doi, cache):
+def resolve_doi(doi: str, cache:  dict[str, str]) -> str | bool:
     if doi in cache:
         return prettify_bibtex(cache[doi])
     url = BASE_URL + doi
@@ -104,7 +105,7 @@ def resolve_doi(doi, cache):
         sys.exit(0)
 
 
-def create_ref_llm(text, model, verbose=False):
+def create_ref_llm(text: str, model: str, verbose: bool = False) -> str | bool:
     stream = chat(
         model=model,
         messages=[{'role': 'system', 'content': 'You are very knowledgeable. An expert. Think and respond with confidence.'},
@@ -140,14 +141,14 @@ def create_ref_llm(text, model, verbose=False):
     return False
 
 
-def printable(ref):
+def printable(ref: str) -> str:
     if not ref.bibtex:
         return '% missing: ' + ref.text
     description = 'online lookup' if ref.doi else 'AI-generated, please check correctness'
     return f'% {ref.text}\n% {description}\n{ref.bibtex}'
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description='Description of your program')
     parser.add_argument('-i', '--input', help='input file', required=True)
     parser.add_argument('-o', '--output', help='output file', required=True)
