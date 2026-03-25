@@ -209,3 +209,4 @@ __marimo__/
 references.txt
 *.bib
 CACHE.pickle
+bibtex-generator-cache.pickle

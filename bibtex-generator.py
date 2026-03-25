@@ -16,6 +16,8 @@ try:
 except ImportError:
     LLM_AVAILABLE = False
 
+CACHE_FILE = 'bibtex-generator-cache.pickle'
+
 
 class Reference:
     def __init__(self, text, doi=False, bibtex=False):
@@ -49,7 +51,7 @@ def sort_and_deduplicate(parsed):
     filtered = []
     for i, ref in enumerate(parsed):
         if i > 0 and ref.doi and ref.doi == parsed[i - 1].doi:
-            # TODO: warning?
+            print('Warning: duplicate removed: ', ref.text)
             continue
         filtered.append(ref)
     return filtered
@@ -57,7 +59,7 @@ def sort_and_deduplicate(parsed):
 
 def prepare_cache():
     try:
-        with open('CACHE.pickle', 'rb') as f:
+        with open(CACHE_FILE, 'rb') as f:
             cache = pickle.load(f)
     except FileNotFoundError:
         return {}
@@ -65,7 +67,7 @@ def prepare_cache():
 
 
 def save_cache(cache):
-    with open('CACHE.pickle', 'wb') as f:
+    with open(CACHE_FILE, 'wb') as f:
         pickle.dump(cache, f)
 
 
