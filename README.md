@@ -32,6 +32,6 @@ Or with an LLM:
 python3 bibtex-generator.py -i references.txt -o references.bib -llm
 ```
 
-Specify a model with `-m <model_name>`.
+Specify a model with `-m <model_name>`. LLM-generated entries will have a note on them.
 
 A file called `bibtex-generator-cache.pickle` is generated that caches web requests.
