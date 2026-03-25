@@ -28,6 +28,7 @@ class Reference:
 
 
 def parse_references(references: Sequence[str]) -> Sequence[Reference]:
+    "Assumes that a reference is not split over multiple lines."
     parsed = []
     for line in references:
         if not line:
@@ -108,8 +109,10 @@ def resolve_doi(doi: str, cache:  dict[str, str]) -> str | bool:
 def create_ref_llm(text: str, model: str, verbose: bool = False) -> str | bool:
     stream = chat(
         model=model,
-        messages=[{'role': 'system', 'content': 'You are very knowledgeable. An expert. Think and respond with confidence.'},
-                  {'role': 'user', 'content': f'Can you create a bibtex entry for the following citation? Give no context, only the entry: {text}'}],
+        messages=[{'role': 'system', 'content':
+                   'You are very knowledgeable. An expert. Think and respond with confidence.'},
+                  {'role': 'user', 'content':
+                   f'Can you create a bibtex entry for the following citation? Give no context, only the entry: {text}'}],
         stream=True,
     )
     thinking = False
@@ -152,13 +155,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(description='Description of your program')
     parser.add_argument('-i', '--input', help='input file', required=True)
     parser.add_argument('-o', '--output', help='output file', required=True)
-    parser.add_argument('-llm', '--llm', action='store_true', help='use llm to generate references?', required=False)
-    parser.add_argument('-v', '--verbose', action='store_true', help='print warnings and llm output', required=False)
-    parser.add_argument('-m', '--model', help='model to use to generate references without DOI, default: mistral', default='mistral', required=False)
+    parser.add_argument('-llm', '--llm', action='store_true', required=False,
+                        help='use llm to generate references?')
+    parser.add_argument('-v', '--verbose', action='store_true', required=False,
+                        help='print warnings and llm output')
+    parser.add_argument('-m', '--model', default='mistral', required=False,
+                        help='model to generate references without DOI')
     args = parser.parse_args()
 
     if not PRETTIFY:
-        print('Warning: library "bibtexparser" not found. The bibtex references will not be formatted and instead print in one line.')
+        print('''Warning: library "bibtexparser" not found.
+The bibtex references will not be formatted and instead print in one line.''')
 
     with open(args.input, 'r') as f:
         text = f.read()
@@ -174,7 +181,7 @@ def main() -> None:
         elif LLM_AVAILABLE and args.llm:
             ref.bibtex = create_ref_llm(ref.text, args.model, args.verbose)
             if not ref.bibtex:
-                print("Error: The LLM failed to generate a reference for ", ref.text)
+                print("Error: The LLM failed to generate an entry for ", ref.text)
         else:
             print("Missing DOI for ", ref.text)
 
